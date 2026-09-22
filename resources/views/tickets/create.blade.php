@@ -41,11 +41,21 @@
                             </svg>
                             <span class="text-sm text-slate-500" id="attachments-label">Attach documents or images (max 5MB each)</span>
                         </label>
-                        <input id="attachments" type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="hidden"
-                            onchange="document.getElementById('attachments-label').textContent = this.files.length ? this.files.length + ' file(s) selected' : 'Attach documents or images (max 5MB each)'">
+                        <input id="attachments" type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="hidden">
                         @error('attachments.*')
                             <p class="text-danger-500 text-sm mt-1.5">{{ $message }}</p>
                         @enderror
+
+                        {{-- Selected files preview list --}}
+                        <div id="selectedFilesWrapper" class="mt-3 hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Selected Files</span>
+                                <button type="button" id="removeAllFilesBtn" class="text-xs text-danger-500 hover:text-danger-600 font-medium">
+                                    Remove All
+                                </button>
+                            </div>
+                            <div id="selectedFilesList" class="space-y-1.5"></div>
+                        </div>
                     </div>
 
                     <div class="flex items-center gap-4">
@@ -58,4 +68,76 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('attachments');
+            const label = document.getElementById('attachments-label');
+            const wrapper = document.getElementById('selectedFilesWrapper');
+            const list = document.getElementById('selectedFilesList');
+            const removeAllBtn = document.getElementById('removeAllFilesBtn');
+
+            let fileStore = []; // holds the actual File objects we keep
+
+            function refreshInputFiles() {
+                const dataTransfer = new DataTransfer();
+                fileStore.forEach(file => dataTransfer.items.add(file));
+                input.files = dataTransfer.files;
+            }
+
+            function renderList() {
+                list.innerHTML = '';
+
+                if (fileStore.length === 0) {
+                    wrapper.classList.add('hidden');
+                    label.textContent = 'Attach documents or images (max 5MB each)';
+                    return;
+                }
+
+                wrapper.classList.remove('hidden');
+                label.textContent = fileStore.length + ' file(s) selected';
+
+                fileStore.forEach(function (file, index) {
+                    const row = document.createElement('div');
+                    row.className = 'flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2';
+
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'truncate text-slate-600';
+                    nameSpan.textContent = file.name;
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'text-danger-500 hover:text-danger-600 text-xs font-medium flex-shrink-0';
+                    removeBtn.textContent = 'Remove';
+                    removeBtn.addEventListener('click', function () {
+                        fileStore.splice(index, 1);
+                        refreshInputFiles();
+                        renderList();
+                    });
+
+                    row.appendChild(nameSpan);
+                    row.appendChild(removeBtn);
+                    list.appendChild(row);
+                });
+            }
+
+            input.addEventListener('change', function () {
+                // Add newly selected files to the store (avoid exact duplicates)
+                Array.from(input.files).forEach(function (file) {
+                    const alreadyExists = fileStore.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+                    if (!alreadyExists) {
+                        fileStore.push(file);
+                    }
+                });
+                refreshInputFiles();
+                renderList();
+            });
+
+            removeAllBtn.addEventListener('click', function () {
+                fileStore = [];
+                refreshInputFiles();
+                renderList();
+            });
+        });
+    </script>
 </x-app-layout>
