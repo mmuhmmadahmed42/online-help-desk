@@ -11,10 +11,19 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::create([
+            'name' => 'Admin',
+            'email' => 'admin@helpdesk.com',
+            'password' => Hash::make('password'),
+            'role' => 'admin',
+            'is_active' => true,
+        ]);
+
+        User::create([
             'name' => 'Project Manager',
             'email' => 'pm@helpdesk.com',
             'password' => Hash::make('password'),
             'role' => 'project_manager',
+            'is_active' => true,
         ]);
 
         User::create([
@@ -22,6 +31,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'backend@helpdesk.com',
             'password' => Hash::make('password'),
             'role' => 'backend_team',
+            'is_active' => true,
         ]);
 
         User::create([
@@ -29,6 +39,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'frontend@helpdesk.com',
             'password' => Hash::make('password'),
             'role' => 'frontend_team',
+            'is_active' => true,
         ]);
     }
 }

@@ -133,7 +133,7 @@
 
                         @if ($currentTeam === 'backend')
                             <p class="text-xs text-slate-500 mt-2">
-                                Frontend ka kam bhi baaqi hai to "Complete &amp; Send to Frontend" dabayein. Ticket yahin band karna hai to "Mark as Completed" dabayein.
+                                 If frontend work is still pending, click "Complete & Send to Frontend". If the ticket is fully resolved, click "Mark as Completed".
                             </p>
                         @endif
                     </form>

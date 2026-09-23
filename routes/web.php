@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectManagerController;
 use App\Http\Controllers\TeamController;
@@ -7,7 +8,7 @@ use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', function () {
@@ -42,6 +43,15 @@ Route::middleware(['auth', 'role:backend_team,frontend_team'])->prefix('team')->
     Route::get('/tickets/{ticket}/history', [TeamController::class, 'history'])->name('history');
     Route::post('/tickets/{ticket}/comment', [TeamController::class, 'comment'])->name('comment');
     Route::post('/tickets/{ticket}/complete', [TeamController::class, 'complete'])->name('complete');
+});
+
+// Admin routes — only accessible by role "admin"
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::get('/users/create', [AdminController::class, 'create'])->name('create');
+    Route::post('/users', [AdminController::class, 'store'])->name('store');
+    Route::post('/users/{user}/activate', [AdminController::class, 'activate'])->name('activate');
+    Route::post('/users/{user}/deactivate', [AdminController::class, 'deactivate'])->name('deactivate');
 });
 
 require __DIR__.'/auth.php';

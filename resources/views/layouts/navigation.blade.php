@@ -28,6 +28,10 @@
                         <x-nav-link :href="route('team.my-history')" :active="request()->routeIs('team.my-history')">
                             Ticket History
                         </x-nav-link>
+                    @elseif (Auth::user()->isAdmin())
+                        <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.*')">
+                            Manage Users
+                        </x-nav-link>
                     @endif
                 </div>
             </div>
@@ -158,6 +162,10 @@
                 </x-responsive-nav-link>
                 <x-responsive-nav-link :href="route('team.my-history')" :active="request()->routeIs('team.my-history')">
                     Ticket History
+                </x-responsive-nav-link>
+            @elseif (Auth::user()->isAdmin())
+                <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.*')">
+                    Manage Users
                 </x-responsive-nav-link>
             @endif
         </div>

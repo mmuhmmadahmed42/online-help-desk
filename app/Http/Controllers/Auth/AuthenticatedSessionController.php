@@ -30,7 +30,19 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
+        // Block login if account hasn't been approved by Admin yet
+        if (! $user->is_active) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors([
+                'email' => 'Your account is pending Admin approval. Please wait until it is activated.',
+            ]);
+        }
+
         return match ($user->role) {
+            'admin' => redirect('/admin'),
             'project_manager' => redirect('/pm'),
             'backend_team', 'frontend_team' => redirect('/team'),
             default => redirect('/tickets'),

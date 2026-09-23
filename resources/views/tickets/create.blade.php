@@ -35,11 +35,11 @@
 
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Attachments (optional)</label>
-                        <label for="attachments" class="flex items-center gap-2 w-full border border-dashed border-slate-300 rounded-lg px-4 py-3 cursor-pointer hover:border-brand-400 hover:bg-slate-50 transition">
+                        <label for="attachments" id="dropZone" class="flex items-center gap-2 w-full border border-dashed border-slate-300 rounded-lg px-4 py-3 cursor-pointer hover:border-brand-400 hover:bg-slate-50 transition">
                             <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                             </svg>
-                            <span class="text-sm text-slate-500" id="attachments-label">Attach documents or images (max 5MB each)</span>
+                            <span class="text-sm text-slate-500" id="attachments-label">Attach or drop documents/images (max 5MB each)</span>
                         </label>
                         <input id="attachments" type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="hidden">
                         @error('attachments.*')
@@ -76,6 +76,7 @@
             const wrapper = document.getElementById('selectedFilesWrapper');
             const list = document.getElementById('selectedFilesList');
             const removeAllBtn = document.getElementById('removeAllFilesBtn');
+            const dropZone = document.getElementById('dropZone');
 
             let fileStore = []; // holds the actual File objects we keep
 
@@ -85,12 +86,23 @@
                 input.files = dataTransfer.files;
             }
 
+            function addFiles(newFiles) {
+                Array.from(newFiles).forEach(function (file) {
+                    const alreadyExists = fileStore.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
+                    if (!alreadyExists) {
+                        fileStore.push(file);
+                    }
+                });
+                refreshInputFiles();
+                renderList();
+            }
+
             function renderList() {
                 list.innerHTML = '';
 
                 if (fileStore.length === 0) {
                     wrapper.classList.add('hidden');
-                    label.textContent = 'Attach documents or images (max 5MB each)';
+                    label.textContent = 'Attach or drop documents/images (max 5MB each)';
                     return;
                 }
 
@@ -101,9 +113,34 @@
                     const row = document.createElement('div');
                     row.className = 'flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2';
 
+                    const leftSide = document.createElement('div');
+                    leftSide.className = 'flex items-center gap-2 min-w-0';
+
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.className = 'w-8 h-8 rounded object-cover flex-shrink-0 border border-slate-200';
+                        img.onload = function () { URL.revokeObjectURL(img.src); };
+                        leftSide.appendChild(img);
+                    } else {
+                        const iconWrap = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                        iconWrap.setAttribute('class', 'w-4 h-4 flex-shrink-0 text-slate-400');
+                        iconWrap.setAttribute('fill', 'none');
+                        iconWrap.setAttribute('viewBox', '0 0 24 24');
+                        iconWrap.setAttribute('stroke', 'currentColor');
+                        iconWrap.setAttribute('stroke-width', '2');
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('stroke-linecap', 'round');
+                        path.setAttribute('stroke-linejoin', 'round');
+                        path.setAttribute('d', 'M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13');
+                        iconWrap.appendChild(path);
+                        leftSide.appendChild(iconWrap);
+                    }
+
                     const nameSpan = document.createElement('span');
                     nameSpan.className = 'truncate text-slate-600';
                     nameSpan.textContent = file.name;
+                    leftSide.appendChild(nameSpan);
 
                     const removeBtn = document.createElement('button');
                     removeBtn.type = 'button';
@@ -115,28 +152,41 @@
                         renderList();
                     });
 
-                    row.appendChild(nameSpan);
+                    row.appendChild(leftSide);
                     row.appendChild(removeBtn);
                     list.appendChild(row);
                 });
             }
 
             input.addEventListener('change', function () {
-                // Add newly selected files to the store (avoid exact duplicates)
-                Array.from(input.files).forEach(function (file) {
-                    const alreadyExists = fileStore.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified);
-                    if (!alreadyExists) {
-                        fileStore.push(file);
-                    }
-                });
-                refreshInputFiles();
-                renderList();
+                addFiles(input.files);
             });
 
             removeAllBtn.addEventListener('click', function () {
                 fileStore = [];
                 refreshInputFiles();
                 renderList();
+            });
+
+            // ---- Drag and drop support ----
+            ['dragenter', 'dragover'].forEach(function (eventName) {
+                dropZone.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.add('border-brand-400', 'bg-slate-50');
+                });
+            });
+
+            ['dragleave', 'drop'].forEach(function (eventName) {
+                dropZone.addEventListener(eventName, function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropZone.classList.remove('border-brand-400', 'bg-slate-50');
+                });
+            });
+
+            dropZone.addEventListener('drop', function (e) {
+                addFiles(e.dataTransfer.files);
             });
         });
     </script>

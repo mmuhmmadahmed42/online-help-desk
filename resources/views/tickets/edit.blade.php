@@ -15,42 +15,6 @@
                 </div>
             @endif
 
-            {{-- Existing attachments — kept OUTSIDE the update form to avoid nested <form> tags --}}
-            @if ($ticket->attachments->count() || $ticket->attachment_path)
-                <div class="bg-white p-6 rounded-xl border border-slate-200 mb-4">
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Existing Attachments</label>
-
-                    <div class="space-y-2">
-                        @if ($ticket->attachment_path)
-                            <div class="flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
-                                <a href="{{ Storage::url($ticket->attachment_path) }}" target="_blank" class="flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium truncate">
-                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                    </svg>
-                                    <span class="truncate">{{ $ticket->attachment_name }}</span>
-                                </a>
-                            </div>
-                        @endif
-
-                        @foreach ($ticket->attachments as $attachment)
-                            <div class="flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
-                                <a href="{{ Storage::url($attachment->file_path) }}" target="_blank" class="flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium truncate">
-                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                    </svg>
-                                    <span class="truncate">{{ $attachment->file_name }}</span>
-                                </a>
-                                <form action="{{ route('attachments.destroy', $attachment) }}" method="POST" class="remove-attachment-form">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" class="text-danger-500 hover:text-danger-600 text-xs font-medium flex-shrink-0 remove-attachment-btn">Remove</button>
-                                </form>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
-
             <div class="bg-white p-6 rounded-xl border border-slate-200">
                 <form action="{{ route('tickets.update', $ticket) }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -73,6 +37,59 @@
                             <p class="text-danger-500 text-sm mt-1.5">{{ $message }}</p>
                         @enderror
                     </div>
+
+                    {{-- Existing attachments — inside the form, removal via JS fetch (no nested <form>) --}}
+                    @if ($ticket->attachments->count() || $ticket->attachment_path)
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Existing Attachments</label>
+
+                            <div class="space-y-2" id="existingAttachmentsList">
+                                @if ($ticket->attachment_path)
+                                    @php
+                                        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                                        $isImage = in_array(strtolower(pathinfo($ticket->attachment_name, PATHINFO_EXTENSION)), $imageExtensions);
+                                    @endphp
+                                    <div class="flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+                                        <a href="{{ Storage::url($ticket->attachment_path) }}" target="_blank" class="flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium truncate min-w-0">
+                                            @if ($isImage)
+                                                <img src="{{ Storage::url($ticket->attachment_path) }}" alt="{{ $ticket->attachment_name }}"
+                                                    class="w-8 h-8 rounded object-cover flex-shrink-0 border border-slate-200">
+                                            @else
+                                                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                </svg>
+                                            @endif
+                                            <span class="truncate">{{ $ticket->attachment_name }}</span>
+                                        </a>
+                                    </div>
+                                @endif
+
+                                @php
+                                    $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                                @endphp
+                                @foreach ($ticket->attachments as $attachment)
+                                    @php
+                                        $isImage = in_array(strtolower(pathinfo($attachment->file_name, PATHINFO_EXTENSION)), $imageExtensions);
+                                    @endphp
+                                    <div class="flex items-center justify-between gap-2 text-sm bg-slate-50 border border-slate-100 rounded-lg px-3 py-2" data-row-id="{{ $attachment->id }}">
+                                        <a href="{{ Storage::url($attachment->file_path) }}" target="_blank" class="flex items-center gap-2 text-brand-600 hover:text-brand-700 font-medium truncate min-w-0">
+                                            @if ($isImage)
+                                                <img src="{{ Storage::url($attachment->file_path) }}" alt="{{ $attachment->file_name }}"
+                                                    class="w-8 h-8 rounded object-cover flex-shrink-0 border border-slate-200">
+                                            @else
+                                                <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                </svg>
+                                            @endif
+                                            <span class="truncate">{{ $attachment->file_name }}</span>
+                                        </a>
+                                        <button type="button" class="text-danger-500 hover:text-danger-600 text-xs font-medium flex-shrink-0 remove-attachment-btn"
+                                            data-url="{{ route('attachments.destroy', $attachment) }}">Remove</button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Add More Attachments (optional)</label>
@@ -129,30 +146,47 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // ---- Existing attachment remove modal ----
+            // ---- Existing attachment remove modal (via fetch, no nested <form>) ----
             const modal = document.getElementById('removeConfirmModal');
             const cancelBtn = document.getElementById('cancelRemoveBtn');
             const confirmBtn = document.getElementById('confirmRemoveBtn');
-            let formToSubmit = null;
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            let urlToDelete = null;
+            let rowToRemove = null;
 
             document.querySelectorAll('.remove-attachment-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    formToSubmit = btn.closest('form');
+                    urlToDelete = btn.getAttribute('data-url');
+                    rowToRemove = btn.closest('[data-row-id]');
                     modal.classList.remove('hidden');
                     modal.classList.add('flex');
                 });
             });
 
             cancelBtn.addEventListener('click', function () {
-                formToSubmit = null;
+                urlToDelete = null;
+                rowToRemove = null;
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             });
 
             confirmBtn.addEventListener('click', function () {
-                if (formToSubmit) {
-                    formToSubmit.submit();
-                }
+                if (!urlToDelete) return;
+
+                fetch(urlToDelete, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-HTTP-Method-Override': 'DELETE',
+                        'Accept': 'application/json',
+                    },
+                }).then(function (response) {
+                    if (response.ok && rowToRemove) {
+                        rowToRemove.remove();
+                    }
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                });
             });
 
             // ---- New files preview list (Remove / Remove All) ----
