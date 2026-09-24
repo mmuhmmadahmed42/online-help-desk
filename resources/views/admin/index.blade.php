@@ -44,23 +44,27 @@
                                         {{ $user->is_active ? 'Active' : 'Pending' }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 text-sm">
+                                <td class="px-6 py-4 text-sm space-x-3">
                                     @if ($user->role !== 'admin')
                                         @if ($user->is_active)
-                                            <form action="{{ route('admin.deactivate', $user) }}" method="POST">
+                                            <form action="{{ route('admin.deactivate', $user) }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit" class="text-danger-500 hover:text-danger-600 text-sm font-medium">
                                                     Deactivate
                                                 </button>
                                             </form>
                                         @else
-                                            <form action="{{ route('admin.activate', $user) }}" method="POST">
+                                            <form action="{{ route('admin.activate', $user) }}" method="POST" class="inline">
                                                 @csrf
                                                 <button type="submit" class="bg-brand-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-brand-600 transition font-medium">
                                                     Activate
                                                 </button>
                                             </form>
                                         @endif
+
+                                        <a href="{{ route('admin.users.change-password', $user) }}" class="text-accent-500 hover:text-accent-600 text-sm font-medium">
+                                            Change Password
+                                        </a>
                                     @else
                                         <span class="text-slate-300 text-sm">—</span>
                                     @endif
@@ -68,7 +72,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-6 py-16 text-center text-sm text-slate-500">Koi user nahi mila.</td>
+                                <td colspan="5" class="px-6 py-16 text-center text-sm text-slate-500">No users found.</td>
                             </tr>
                         @endforelse
                     </tbody>

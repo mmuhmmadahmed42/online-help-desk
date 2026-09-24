@@ -96,6 +96,64 @@
                             </div>
                         </div>
                     </div>
+                @elseif (Auth::user()->isAdmin())
+                    <div x-data="{
+                        open: false,
+                        count: 0,
+                        notifications: [],
+                        loading: false,
+                        poll() {
+                            fetch('{{ route('admin.password-requests.new') }}')
+                                .then(r => r.json())
+                                .then(d => this.count = d.count);
+                        },
+                        openDropdown() {
+                            this.open = !this.open;
+                            if (this.open) {
+                                this.loading = true;
+                                fetch('{{ route('admin.password-requests') }}')
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        this.notifications = d.requests;
+                                        this.count = 0;
+                                        this.loading = false;
+                                    });
+                            }
+                        }
+                    }"
+                    x-init="poll(); setInterval(() => poll(), 15000)"
+                    @click.outside="open = false"
+                    class="relative">
+                        <button @click="openDropdown()" class="relative p-2 text-slate-500 hover:text-brand-600 transition">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                            <span x-show="count > 0" x-text="count" class="absolute -top-0.5 -right-0.5 bg-danger-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center"></span>
+                        </button>
+
+                        <div x-show="open" x-transition x-cloak
+                            class="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden z-50">
+                            <div class="px-4 py-3 border-b border-slate-100">
+                                <p class="text-sm font-semibold text-slate-800">Password Reset Requests</p>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                <template x-if="loading">
+                                    <p class="px-4 py-6 text-sm text-slate-400 text-center">Loading...</p>
+                                </template>
+                                <template x-if="!loading && notifications.length === 0">
+                                    <p class="px-4 py-6 text-sm text-slate-400 text-center">No pending requests.</p>
+                                </template>
+                                <template x-for="n in notifications" :key="n.user_id">
+                                    <a x-bind:href="'{{ url('/admin/users') }}/' + n.user_id + '/change-password'" class="block px-4 py-3 hover:bg-slate-50 border-b border-slate-50 last:border-0">
+                                        <p class="text-sm font-medium text-slate-800" x-text="n.name"></p>
+                                        <p class="text-xs text-slate-400 mt-0.5">
+                                            <span x-text="n.email"></span> · <span x-text="n.time"></span>
+                                        </p>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 @endif
 
                 <span class="text-xs uppercase tracking-wide text-brand-600 font-medium bg-brand-50 px-2.5 py-1 rounded-full">
@@ -120,10 +178,10 @@
                         </x-dropdown-link>
 
                         <!-- Authentication -->
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ Auth::user()->isAdmin() ? route('admin.logout') : route('logout') }}">
                             @csrf
 
-                            <x-dropdown-link :href="route('logout')"
+                            <x-dropdown-link :href="Auth::user()->isAdmin() ? route('admin.logout') : route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
                                 {{ __('Log Out') }}
@@ -184,10 +242,10 @@
                 </x-responsive-nav-link>
 
                 <!-- Authentication -->
-                <form method="POST" action="{{ route('logout') }}">
+                <form method="POST" action="{{ Auth::user()->isAdmin() ? route('admin.logout') : route('logout') }}">
                     @csrf
 
-                    <x-responsive-nav-link :href="route('logout')"
+                    <x-responsive-nav-link :href="Auth::user()->isAdmin() ? route('admin.logout') : route('logout')"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();">
                         {{ __('Log Out') }}

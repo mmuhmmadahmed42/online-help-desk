@@ -14,6 +14,13 @@ class TicketController extends Controller
     // Show all tickets created by the logged-in user
     public function index()
     {
+        $user = Auth::user();
+
+        if ($user->password_changed_notice) {
+            $user->update(['password_changed_notice' => false]);
+            session()->flash('password_notice', 'Your password was updated by Admin.');
+        }
+
         $tickets = Ticket::where('user_id', Auth::id())->latest()->get();
         return view('tickets.index', compact('tickets'));
     }

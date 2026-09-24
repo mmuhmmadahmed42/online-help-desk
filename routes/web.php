@@ -52,6 +52,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users', [AdminController::class, 'store'])->name('store');
     Route::post('/users/{user}/activate', [AdminController::class, 'activate'])->name('activate');
     Route::post('/users/{user}/deactivate', [AdminController::class, 'deactivate'])->name('deactivate');
+    Route::get('/users/{user}/change-password', [AdminController::class, 'editPassword'])->name('users.change-password');
+    Route::post('/users/{user}/change-password', [AdminController::class, 'updatePassword'])->name('users.update-password');
+    Route::get('/password-requests', [AdminController::class, 'passwordRequests'])->name('password-requests');
+    Route::get('/password-requests/new', [AdminController::class, 'newPasswordRequests'])->name('password-requests.new');
 });
 
 require __DIR__.'/auth.php';

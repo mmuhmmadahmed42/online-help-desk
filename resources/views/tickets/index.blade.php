@@ -14,6 +14,12 @@
                 </div>
             @endif
 
+            @if (session('password_notice'))
+                <div class="mb-4 p-4 bg-accent-50 text-accent-700 rounded-md border border-accent-100">
+                    {{ session('password_notice') }}
+                </div>
+            @endif
+
             @if (session('error'))
                 <div class="mb-4 px-4 py-3 bg-danger-50 text-danger-600 rounded-lg border border-danger-50 text-sm">
                     {{ session('error') }}
