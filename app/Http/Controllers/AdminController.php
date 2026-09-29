@@ -13,10 +13,31 @@ use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    // Show all users, pending (inactive) ones first
-    public function index(): View
+    // Show all users, pending (inactive) ones first — with search + filters
+    public function index(Request $request): View
     {
-        $users = User::orderBy('is_active', 'asc')->orderBy('created_at', 'desc')->get();
+        $query = User::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
+        }
+
+        $users = $query->orderBy('is_active', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString();
 
         return view('admin.index', compact('users'));
     }
@@ -90,7 +111,7 @@ class AdminController extends Controller
             ->where('resolved', false)
             ->update(['resolved' => true]);
 
-        return redirect()->route('admin.index')->with('success', $user->name . '\'s password has been changed successfully.');
+        return redirect()->route('admin.index')->with('success', $user->name . '\'s password has been changed to: ' . $request->password);
     }
 
     // JSON: count of pending password reset requests (for the bell badge)

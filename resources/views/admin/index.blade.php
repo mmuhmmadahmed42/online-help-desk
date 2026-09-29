@@ -21,6 +21,45 @@
                 </a>
             </div>
 
+            <!-- Search + Filters -->
+            <form action="{{ route('admin.index') }}" method="GET" class="bg-white border border-slate-200 rounded-xl p-4 mb-4 flex flex-wrap items-end gap-3">
+                <div class="flex-1 min-w-[180px]">
+                    <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Search</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Name or email..."
+                        class="w-full border-slate-200 rounded-lg text-sm focus:border-brand-400 focus:ring-brand-400">
+                </div>
+
+                <div class="min-w-[160px]">
+                    <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Role</label>
+                    <select name="role" class="w-full border-slate-200 rounded-lg text-sm focus:border-brand-400 focus:ring-brand-400">
+                        <option value="">All Roles</option>
+                        <option value="user" @selected(request('role') === 'user')>User</option>
+                        <option value="project_manager" @selected(request('role') === 'project_manager')>Project Manager</option>
+                        <option value="backend_team" @selected(request('role') === 'backend_team')>Backend Team</option>
+                        <option value="frontend_team" @selected(request('role') === 'frontend_team')>Frontend Team</option>
+                        <option value="admin" @selected(request('role') === 'admin')>Admin</option>
+                    </select>
+                </div>
+
+                <div class="min-w-[140px]">
+                    <label class="block text-xs font-medium text-slate-500 uppercase tracking-wide mb-1">Status</label>
+                    <select name="status" class="w-full border-slate-200 rounded-lg text-sm focus:border-brand-400 focus:ring-brand-400">
+                        <option value="">All Statuses</option>
+                        <option value="active" @selected(request('status') === 'active')>Active</option>
+                        <option value="pending" @selected(request('status') === 'pending')>Pending</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button type="submit" class="bg-brand-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-600 transition">
+                        Filter
+                    </button>
+                    @if (request('search') || request('role') || request('status'))
+                        <a href="{{ route('admin.index') }}" class="text-slate-500 hover:text-slate-700 text-sm font-medium">Clear</a>
+                    @endif
+                </div>
+            </form>
+
             <div class="bg-white overflow-hidden rounded-xl border border-slate-200">
                 <table class="min-w-full divide-y divide-slate-100">
                     <thead class="bg-slate-50">
@@ -77,6 +116,10 @@
                         @endforelse
                     </tbody>
                 </table>
+            </div>
+
+            <div class="mt-4">
+                {{ $users->links() }}
             </div>
         </div>
     </div>
