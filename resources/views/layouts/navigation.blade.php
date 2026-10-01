@@ -29,8 +29,11 @@
                             Ticket History
                         </x-nav-link>
                     @elseif (Auth::user()->isAdmin())
-                        <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.*')">
+                        <x-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index') || request()->routeIs('admin.create') || request()->routeIs('admin.users.*')">
                             Manage Users
+                        </x-nav-link>
+                        <x-nav-link :href="route('admin.activity')" :active="request()->routeIs('admin.activity')">
+                            View Recent Activity
                         </x-nav-link>
                     @endif
                 </div>
@@ -97,6 +100,64 @@
                         </div>
                     </div>
                 @elseif (Auth::user()->isAdmin())
+                    <!-- Activity Feed bell -->
+                    <div x-data="{
+                        open: false,
+                        count: 0,
+                        activities: [],
+                        loading: false,
+                        poll() {
+                            fetch('{{ route('admin.activity-feed.new') }}')
+                                .then(r => r.json())
+                                .then(d => this.count = d.count);
+                        },
+                        openDropdown() {
+                            this.open = !this.open;
+                            if (this.open) {
+                                this.loading = true;
+                                fetch('{{ route('admin.activity-feed') }}')
+                                    .then(r => r.json())
+                                    .then(d => {
+                                        this.activities = d.activities;
+                                        this.count = 0;
+                                        this.loading = false;
+                                    });
+                            }
+                        }
+                    }"
+                    x-init="poll(); setInterval(() => poll(), 15000)"
+                    @click.outside="open = false"
+                    class="relative">
+                        <button @click="openDropdown()" class="relative p-2 text-slate-500 hover:text-brand-600 transition">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <span x-show="count > 0" x-text="count" class="absolute -top-0.5 -right-0.5 bg-danger-500 text-white text-[10px] font-semibold rounded-full h-4 w-4 flex items-center justify-center"></span>
+                        </button>
+
+                        <div x-show="open" x-transition x-cloak
+                            class="absolute right-0 mt-2 w-80 bg-white rounded-xl border border-slate-200 shadow-lg overflow-hidden z-50">
+                            <div class="px-4 py-3 border-b border-slate-100">
+                                <p class="text-sm font-semibold text-slate-800">Recent Activity</p>
+                            </div>
+                            <div class="max-h-80 overflow-y-auto">
+                                <template x-if="loading">
+                                    <p class="px-4 py-6 text-sm text-slate-400 text-center">Loading...</p>
+                                </template>
+                                <template x-if="!loading && activities.length === 0">
+                                    <p class="px-4 py-6 text-sm text-slate-400 text-center">No activity yet.</p>
+                                </template>
+                                <template x-for="(a, index) in activities" :key="index">
+                                    <div class="block px-4 py-3 border-b border-slate-50 last:border-0">
+                                        <p class="text-sm text-slate-700" x-text="a.description"></p>
+                                        <p class="text-xs text-slate-400 mt-0.5" x-text="a.time"></p>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Password Reset Requests bell -->
                     <div x-data="{
                         open: false,
                         count: 0,
@@ -222,8 +283,11 @@
                     Ticket History
                 </x-responsive-nav-link>
             @elseif (Auth::user()->isAdmin())
-                <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.*')">
+                <x-responsive-nav-link :href="route('admin.index')" :active="request()->routeIs('admin.index') || request()->routeIs('admin.create') || request()->routeIs('admin.users.*')">
                     Manage Users
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('admin.activity')" :active="request()->routeIs('admin.activity')">
+                    View Recent Activity
                 </x-responsive-nav-link>
             @endif
         </div>

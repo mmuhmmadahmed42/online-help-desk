@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,6 +24,13 @@ class ProjectManagerController extends Controller
         ]);
 
         $ticket->assignToTeam($request->assigned_team, $request->user());
+
+        ActivityLog::log(
+            'ticket_assigned',
+            $request->user()->name . ' assigned ticket "' . $ticket->title . '" (' . $ticket->reference_number . ') to ' . ucfirst($request->assigned_team) . ' team',
+            $ticket->id,
+            $request->user()->id
+        );
 
         return redirect()->route('pm.index')->with('success', 'Ticket assigned to ' . ucfirst($request->assigned_team) . ' team.');
     }

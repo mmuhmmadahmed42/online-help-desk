@@ -48,6 +48,7 @@ Route::middleware(['auth', 'role:backend_team,frontend_team'])->prefix('team')->
 // Admin routes — only accessible by role "admin"
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'index'])->name('index');
+    Route::get('/activity', [AdminController::class, 'activity'])->name('activity');
     Route::get('/users/create', [AdminController::class, 'create'])->name('create');
     Route::post('/users', [AdminController::class, 'store'])->name('store');
     Route::post('/users/{user}/activate', [AdminController::class, 'activate'])->name('activate');
@@ -56,6 +57,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/users/{user}/change-password', [AdminController::class, 'updatePassword'])->name('users.update-password');
     Route::get('/password-requests', [AdminController::class, 'passwordRequests'])->name('password-requests');
     Route::get('/password-requests/new', [AdminController::class, 'newPasswordRequests'])->name('password-requests.new');
+    Route::get('/activity-feed', [AdminController::class, 'activityFeed'])->name('activity-feed');
+    Route::get('/activity-feed/new', [AdminController::class, 'newActivityCount'])->name('activity-feed.new');
+        Route::get('/tickets/{ticket}', [AdminController::class, 'showTicket'])->name('tickets.show');
 });
 
 require __DIR__.'/auth.php';

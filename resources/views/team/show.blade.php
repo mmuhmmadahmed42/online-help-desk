@@ -5,6 +5,8 @@
         </h2>
     </x-slot>
 
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
     @php
         $currentTeam = auth()->user()->isBackendTeam() ? 'backend' : 'frontend';
     @endphp
@@ -44,7 +46,7 @@
 
                 <div>
                     <span class="text-xs text-slate-400 uppercase tracking-wide">Description</span>
-                    <p class="text-slate-600 mt-1">{{ $ticket->description }}</p>
+                    <div class="text-slate-600 mt-1">{!! $ticket->description !!}</div>
                 </div>
 
                 @if ($ticket->hasAttachment())
@@ -88,7 +90,7 @@
                     @forelse ($histories as $history)
                         <div class="border-l-2 {{ $history->team === 'backend' ? 'border-accent-400' : 'border-brand-400' }} bg-slate-50 p-3 rounded-r-lg mb-2">
                             <p class="text-sm font-semibold text-slate-800">{{ $history->action }}</p>
-                            <p class="text-sm text-slate-600 mt-1">{{ $history->details }}</p>
+                            <div class="text-sm text-slate-600 mt-1">{!! $history->details !!}</div>
                             <p class="text-xs text-slate-400 mt-1.5">
                                 {{ $history->user->name }} ({{ ucfirst($history->team) }} team) &middot; {{ $history->created_at->format('d M Y, h:i A') }}
                             </p>
@@ -101,15 +103,14 @@
                 {{-- Work details form --}}
                 @if ($ticket->isInProgress() && $ticket->assigned_team === $currentTeam)
                     <form action="{{ route('team.complete', $ticket) }}" method="POST"
-                          class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                          class="border border-slate-200 rounded-xl p-4 bg-slate-50" id="workDetailsForm">
                         @csrf
 
                         <label class="block text-sm font-medium text-slate-700 mb-1">
                             Work Details (kia kam kia?) <span class="text-danger-500">*</span>
                         </label>
-                        <textarea name="work_details" rows="3" required
-                            placeholder="Describe the work you did on this ticket..."
-                            class="w-full border-slate-200 rounded-lg shadow-sm focus:border-brand-400 focus:ring-brand-400">{{ old('work_details') }}</textarea>
+                        <div id="work_details-editor" style="min-height: 100px;" class="bg-white rounded-lg"></div>
+                        <textarea name="work_details" id="work_details" class="hidden" required>{{ old('work_details') }}</textarea>
 
                         @error('work_details')
                             <p class="text-sm text-danger-500 mt-1">{{ $message }}</p>
@@ -151,7 +152,7 @@
 
                     @forelse ($ticket->comments as $comment)
                         <div class="bg-slate-50 p-3 rounded-lg mb-2 border border-slate-100">
-                            <p class="text-sm text-slate-700">{{ $comment->comment }}</p>
+                            <div class="text-sm text-slate-700">{!! $comment->comment !!}</div>
                             <p class="text-xs text-slate-400 mt-1">
                                 {{ $comment->user->name }} &middot; {{ $comment->created_at->diffForHumans() }}
                             </p>
@@ -160,10 +161,10 @@
                         <p class="text-sm text-slate-500 mb-3">No comments yet.</p>
                     @endforelse
 
-                    <form action="{{ route('team.comment', $ticket) }}" method="POST" class="mt-4">
+                    <form action="{{ route('team.comment', $ticket) }}" method="POST" class="mt-4" id="commentForm">
                         @csrf
-                        <textarea name="comment" rows="3" placeholder="Write a comment (e.g. ticket incomplete, wrong details, etc.)"
-                            class="w-full border-slate-200 rounded-lg shadow-sm focus:border-brand-400 focus:ring-brand-400"></textarea>
+                        <div id="comment-editor" style="min-height: 100px;" class="bg-white rounded-lg"></div>
+                        <textarea name="comment" id="comment" class="hidden"></textarea>
                         <button type="submit" class="mt-2 bg-brand-500 text-white px-4 py-2 rounded-lg hover:bg-brand-600 transition text-sm font-medium">
                             Add Comment
                         </button>
@@ -173,4 +174,24 @@
             </div>
         </div>
     </div>
+
+        <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+    <script>
+        const toolbarOptions = [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']];
+
+        if (document.getElementById('work_details-editor')) {
+            const workQuill = new Quill('#work_details-editor', { theme: 'snow', modules: { toolbar: toolbarOptions } });
+            workQuill.root.innerHTML = document.getElementById('work_details').value;
+            workQuill.on('text-change', function () {
+                document.getElementById('work_details').value = workQuill.root.innerHTML;
+            });
+        }
+
+        if (document.getElementById('comment-editor')) {
+            const commentQuill = new Quill('#comment-editor', { theme: 'snow', modules: { toolbar: toolbarOptions } });
+            commentQuill.on('text-change', function () {
+                document.getElementById('comment').value = commentQuill.root.innerHTML;
+            });
+        }
+    </script>
 </x-app-layout>

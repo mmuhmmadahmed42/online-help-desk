@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\NewTicketNotification;
+use App\Models\ActivityLog;
 use App\Models\Ticket;
 use App\Models\TicketAttachment;
 use Illuminate\Http\Request;
@@ -56,6 +57,13 @@ class TicketController extends Controller
                 ]);
             }
         }
+
+        ActivityLog::log(
+            'ticket_created',
+            Auth::user()->name . ' created a new ticket: "' . $ticket->title . '" (' . $ticket->reference_number . ')',
+            $ticket->id,
+            Auth::id()
+        );
 
         try {
             event(new NewTicketNotification($ticket));

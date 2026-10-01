@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\PasswordResetRequest;
+use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,7 +15,6 @@ use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    // Show all users, pending (inactive) ones first — with search + filters
     public function index(Request $request): View
     {
         $query = User::query();
@@ -42,13 +43,26 @@ class AdminController extends Controller
         return view('admin.index', compact('users'));
     }
 
-    // Show the "Add New User" form
+    public function activity(): View
+    {
+        $activities = ActivityLog::with(['user', 'ticket'])->latest()->paginate(20);
+
+        return view('admin.activity', compact('activities'));
+    }
+
+    // Admin view of a single ticket's full detail
+    public function showTicket(Ticket $ticket): View
+    {
+        $ticket->load(['user', 'assignedBy', 'comments.user', 'attachments']);
+
+        return view('admin.ticket-show', compact('ticket'));
+    }
+
     public function create(): View
     {
         return view('admin.create');
     }
 
-    // Store a new user created by Admin (auto-activated)
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
@@ -69,7 +83,6 @@ class AdminController extends Controller
         return redirect()->route('admin.index')->with('success', 'New user has been added successfully.');
     }
 
-    // Activate a user's account
     public function activate(User $user): RedirectResponse
     {
         $user->update(['is_active' => true]);
@@ -77,24 +90,20 @@ class AdminController extends Controller
         return back()->with('success', $user->name . '\'s account has been activated.');
     }
 
-    // Deactivate a user's account (in case Admin wants to revoke access)
     public function deactivate(User $user): RedirectResponse
     {
         $user->update(['is_active' => false]);
 
-        // Force-logout the user immediately by removing their active sessions
         DB::table('sessions')->where('user_id', $user->id)->delete();
 
         return back()->with('success', $user->name . '\'s account has been deactivated.');
     }
 
-    // Show the "Change Password" form for a specific user
     public function editPassword(User $user): View
     {
         return view('admin.change-password', compact('user'));
     }
 
-    // Update a user's password
     public function updatePassword(Request $request, User $user): RedirectResponse
     {
         $request->validate([
@@ -106,7 +115,6 @@ class AdminController extends Controller
             'password_changed_notice' => true,
         ]);
 
-        // Mark any pending reset requests from this user as resolved
         PasswordResetRequest::where('user_id', $user->id)
             ->where('resolved', false)
             ->update(['resolved' => true]);
@@ -114,7 +122,6 @@ class AdminController extends Controller
         return redirect()->route('admin.index')->with('success', $user->name . '\'s password has been changed to: ' . $request->password);
     }
 
-    // JSON: count of pending password reset requests (for the bell badge)
     public function newPasswordRequests()
     {
         return response()->json([
@@ -122,7 +129,6 @@ class AdminController extends Controller
         ]);
     }
 
-    // JSON: list of pending password reset requests (for the bell dropdown)
     public function passwordRequests()
     {
         $requests = PasswordResetRequest::with('user')
@@ -137,5 +143,28 @@ class AdminController extends Controller
             ]);
 
         return response()->json(['requests' => $requests]);
+    }
+
+    public function newActivityCount()
+    {
+        return response()->json([
+            'count' => ActivityLog::where('seen', false)->count(),
+        ]);
+    }
+
+    public function activityFeed()
+    {
+        $activities = ActivityLog::with('user')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn ($a) => [
+                'description' => $a->description,
+                'time' => $a->created_at->diffForHumans(),
+            ]);
+
+        ActivityLog::where('seen', false)->update(['seen' => true]);
+
+        return response()->json(['activities' => $activities]);
     }
 }

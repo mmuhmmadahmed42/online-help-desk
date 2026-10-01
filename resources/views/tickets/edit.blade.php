@@ -5,6 +5,8 @@
         </h2>
     </x-slot>
 
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+
     <div class="py-12">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             <p class="text-sm text-slate-500 mb-6">You can edit this ticket until it's picked up by the Project Manager.</p>
@@ -31,8 +33,8 @@
 
                     <div class="mb-5">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
-                        <textarea name="description" rows="5"
-                            class="block w-full border-slate-200 rounded-lg shadow-sm focus:border-brand-400 focus:ring-brand-400">{{ old('description', $ticket->description) }}</textarea>
+                        <div id="description-editor" style="min-height: 150px;" class="bg-white rounded-lg"></div>
+                        <textarea name="description" id="description" class="hidden">{{ old('description', $ticket->description) }}</textarea>
                         @error('description')
                             <p class="text-danger-500 text-sm mt-1.5">{{ $message }}</p>
                         @enderror
@@ -144,8 +146,28 @@
         </div>
     </div>
 
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // ---- Quill rich text editor ----
+                        const descriptionQuill = new Quill('#description-editor', {
+                theme: 'snow',
+                modules: {
+                    toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']]
+                }
+            });
+            descriptionQuill.root.innerHTML = document.getElementById('description').value;
+
+            descriptionQuill.on('text-change', function () {
+                document.getElementById('description').value = descriptionQuill.root.innerHTML;
+            });
+            descriptionQuill.root.innerHTML = document.getElementById('description').value;
+
+            document.querySelector('form').addEventListener('submit', function () {
+                document.getElementById('description').value = descriptionQuill.root.innerHTML;
+            });
+
             // ---- Existing attachment remove modal (via fetch, no nested <form>) ----
             const modal = document.getElementById('removeConfirmModal');
             const cancelBtn = document.getElementById('cancelRemoveBtn');

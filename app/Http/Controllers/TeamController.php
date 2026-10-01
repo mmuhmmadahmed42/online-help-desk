@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
 use App\Models\Ticket;
 use App\Models\TicketHistory;
 use Illuminate\Http\Request;
@@ -68,6 +69,13 @@ class TeamController extends Controller
             'comment' => $request->comment,
         ]);
 
+        ActivityLog::log(
+            'ticket_comment',
+            Auth::user()->name . ' added a comment on ticket "' . $ticket->title . '" (' . $ticket->reference_number . ')',
+            $ticket->id,
+            Auth::id()
+        );
+
         return redirect()->route('team.show', $ticket)->with('success', 'Comment added.');
     }
 
@@ -100,6 +108,13 @@ class TeamController extends Controller
             $ticket->assigned_team = 'frontend';
             $ticket->save();
 
+            ActivityLog::log(
+                'team_work',
+                $user->name . ' (Backend) completed work on "' . $ticket->title . '" (' . $ticket->reference_number . ') and sent it to Frontend team',
+                $ticket->id,
+                $user->id
+            );
+
             return redirect()->route('team.index')->with('success', 'Backend work done. Ticket sent to Frontend team.');
         }
 
@@ -112,6 +127,13 @@ class TeamController extends Controller
         ]);
 
         $ticket->update(['status' => 'completed']);
+
+        ActivityLog::log(
+            'ticket_completed',
+            $user->name . ' (' . ucfirst($currentTeam) . ') marked ticket "' . $ticket->title . '" (' . $ticket->reference_number . ') as completed',
+            $ticket->id,
+            $user->id
+        );
 
         return redirect()->route('team.show', $ticket)->with('success', 'Ticket marked as completed.');
     }

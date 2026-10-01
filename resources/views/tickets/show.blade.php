@@ -51,7 +51,7 @@
 
                 <div>
                     <span class="text-xs text-slate-400 uppercase tracking-wide">Description</span>
-                    <p class="text-slate-600 mt-1">{{ $ticket->description }}</p>
+                    <div class="text-slate-600 mt-1">{!! $ticket->description !!}</div>
                 </div>
 
                 @if ($ticket->hasAttachment())
@@ -92,7 +92,7 @@
 
                     @forelse ($ticket->comments as $comment)
                         <div class="bg-slate-50 p-3 rounded-lg mb-2 border border-slate-100">
-                            <p class="text-sm text-slate-700">{{ $comment->comment }}</p>
+                            <div class="text-sm text-slate-700">{!! $comment->comment !!}</div>
                             <p class="text-xs text-slate-400 mt-1">
                                 {{ $comment->user->name }} &middot; {{ $comment->created_at->diffForHumans() }}
                             </p>

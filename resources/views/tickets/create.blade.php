@@ -25,21 +25,23 @@
 
                     <div class="mb-5">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Description</label>
-                        <textarea name="description" rows="5"
-                            placeholder="What happened? Steps to reproduce, if any."
-                            class="block w-full border-slate-200 rounded-lg shadow-sm focus:border-brand-400 focus:ring-brand-400">{{ old('description') }}</textarea>
+                        <div id="description-editor" style="min-height: 150px;" class="bg-white rounded-lg"></div>
+                        <textarea name="description" id="description" class="hidden">{{ old('description') }}</textarea>
                         @error('description')
                             <p class="text-danger-500 text-sm mt-1.5">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <div class="mb-6">
+                                                           <div class="mb-6">
                         <label class="block text-sm font-medium text-slate-700 mb-1.5">Attachments (optional)</label>
-                        <label for="attachments" id="dropZone" class="flex items-center gap-2 w-full border border-dashed border-slate-300 rounded-lg px-4 py-3 cursor-pointer hover:border-brand-400 hover:bg-slate-50 transition">
-                            <svg class="w-5 h-5 text-slate-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        <label for="attachments" id="dropZone" class="flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed border-brand-300 bg-brand-50/40 rounded-xl px-6 py-6 cursor-pointer hover:border-brand-500 hover:bg-brand-50 transition text-center">
+                            <svg class="w-8 h-8 text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                             </svg>
-                            <span class="text-sm text-slate-500" id="attachments-label">Attach or drop documents/images (max 5MB each)</span>
+                            <span class="inline-flex items-center gap-2 bg-brand-500 text-white px-4 py-1.5 rounded-lg text-sm font-medium shadow-sm hover:bg-brand-600 transition">
+                                Choose Files
+                            </span>
+                            <span class="text-xs text-slate-500" id="attachments-label">or drop documents/images here (max 5MB each)</span>
                         </label>
                         <input id="attachments" type="file" name="attachments[]" multiple accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" class="hidden">
                         @error('attachments.*')
@@ -68,6 +70,9 @@
             </div>
         </div>
     </div>
+
+    <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+    <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -187,6 +192,20 @@
 
             dropZone.addEventListener('drop', function (e) {
                 addFiles(e.dataTransfer.files);
+            });
+
+            // ---- Quill rich text editor ----
+                       const descriptionQuill = new Quill('#description-editor', {
+                theme: 'snow',
+                placeholder: "What happened? Steps to reproduce, if any.",
+                modules: {
+                    toolbar: [['bold', 'italic', 'underline'], [{ list: 'ordered' }, { list: 'bullet' }], ['link'], ['clean']]
+                }
+            });
+            descriptionQuill.root.innerHTML = document.getElementById('description').value;
+
+            descriptionQuill.on('text-change', function () {
+                document.getElementById('description').value = descriptionQuill.root.innerHTML;
             });
         });
     </script>
